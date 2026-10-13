@@ -1,0 +1,8 @@
+# tests/conftest.py
+import sys
+import os
+
+# Добавляем корень проекта (папку lab4) в начало пути поиска модулей
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
