@@ -1,77 +1,40 @@
-# Название рабочего процесса
-name: Python Application CI
+name: CI Pipeline
 
-# Триггеры: запуск при пуше в main или при создании PR
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
-# Основная задача
 jobs:
   build-and-test:
-    # ОС для выполнения
     runs-on: ubuntu-latest
 
-    # Шаги выполнения
-    steps:
-    # 1. Клонирование репозитория
-    - name: Checkout code
-      uses: actions/checkout@v4
 
-    # 2. Установка Python
-    - name: Set up Python 3.10
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
+        cache: 'pip'
 
-    # 3. Установка зависимостей
-    - name: Установить зависимости
+    - name: Upgrade pip and install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-   
-    # 3.1. Отладка: проверяем содержимое requirements.txt
-    - name: Show requirements.txt content
-      run: |
-        echo "--- Содержимое файла ---"
-        cat requirements.txt || echo "Файл не найден или пуст"
-        echo "--- Конец файла ---"
-       
-    # 4. Запуск тестов
-    - name: Run tests with pytest
-      run: |
-       pytest -q --disable-warnings
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    # 5. Проверка покрытия кода
-    - name: Calculate coverage
-      run: |
-        pip install 
-        coverage coverage run -m pytest 
-        coverage report -m
+    - name: Install project in editable mode (optional)
+      if: ${{ !contains(github.event.head_commit.message, 'skip-install') }}
+      run: pip install -e .
 
-    # 6. Публикация отчета о покрытии
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: coverage.xml
-        flags: unittests
-        name: codecov-umbrella
+    - name: Run tests
+      run: pytest -v
 
-    # 7. Сборка пакета
     - name: Build package
       run: |
-        pip install -e .
-
-    # 8. Публикация в Test PyPI (опционально)
-    - name: Publish to Test PyPI
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.TEST_PYPI_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
+        pip install build
+        python -m build
+    - name: Verify dist files
+      run: ls -la dist/
