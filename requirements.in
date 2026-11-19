@@ -1,2 +1,6 @@
 pytest
 requests
+numpy
+pytest 
+coverage 
+build
