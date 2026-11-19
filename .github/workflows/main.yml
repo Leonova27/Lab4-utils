@@ -1,11 +1,3 @@
-
-
-# Название рабочего процесса
-name: Python package CI/CD
-
-name: CI Pipeline
-
-
 on:
   push:
     branches: [ main ]
